@@ -1,0 +1,559 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  BLOCKED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  VOICE
+  SNAP
+  GIF
+  STICKER
+  SYSTEM
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  VOICE
+  DOCUMENT
+}
+
+enum SnapVisibility {
+  PRIVATE
+  FRIENDS
+  NEARBY
+  PUBLIC
+}
+
+enum SnapExpiry {
+  VIEW_ONCE
+  HOURS_24
+  DAYS_7
+  PERMANENT
+}
+
+enum StoryVisibility {
+  FRIENDS
+  CONNECTIONS
+  NEARBY
+  CUSTOM
+}
+
+enum CallType {
+  AUDIO
+  VIDEO
+}
+
+enum CallStatus {
+  RINGING
+  ACTIVE
+  ENDED
+  MISSED
+  DECLINED
+  FAILED
+}
+
+enum NearbyVisibility {
+  EVERYONE
+  CONNECTIONS
+  NOBODY
+}
+
+enum DistanceDisplay {
+  EXACT
+  RANGE
+  HIDDEN
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  FAKE_ACCOUNT
+  INAPPROPRIATE_CONTENT
+  VIOLENCE
+  HATE_SPEECH
+  SCAM
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+enum NotificationType {
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  NEW_MESSAGE
+  MISSED_CALL
+  INCOMING_CALL
+  NEW_SNAP
+  STORY_REACTION
+  MENTION
+  REACTION
+  NEARBY_ACTIVITY
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id              String   @id @default(cuid())
+  email           String?  @unique
+  phone           String?  @unique
+  passwordHash    String?
+  isEmailVerified Boolean  @default(false)
+  isPhoneVerified Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  isAdmin         Boolean  @default(false)
+  isBanned        Boolean   @default(false)
+  banReason       String?
+  bannedAt        DateTime?
+  bannedBy        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime @updatedAt
+
+  profile            Profile?
+  location           UserLocation?
+  privacySettings    PrivacySettings?
+  locationPreference LocationPreference?
+  sessions           UserSession[]
+  devices            Device[]
+
+  blocksGiven    Block[] @relation("BlockerUser")
+  blocksReceived Block[] @relation("BlockedUser")
+
+  reportsGiven    Report[] @relation("ReporterUser")
+  reportsReceived Report[] @relation("ReportedUser")
+
+  connectionsAsRequester Connection[] @relation("ConnectionRequester")
+  connectionsAsReceiver  Connection[] @relation("ConnectionReceiver")
+
+  conversationMembers ConversationMember[]
+  messagesSent        Message[]            @relation("MessageSender")
+  stories             Story[]
+  snapsCreated        Snap[]               @relation("SnapSender")
+  snapRecipients      SnapRecipient[]
+  snapViews           SnapView[]
+  nearbySnapsCreated  NearbySnap[]         @relation("NearbySnapCreator")
+  nearbySnapViews     NearbySnapView[]
+  storyViews          StoryView[]
+  callsAsCallor       Call[]               @relation("CallCaller")
+  callsAsReceiver     Call[]               @relation("CallReceiver")
+  notifications       Notification[]
+  messageReactions    MessageReaction[]
+}
+
+model Profile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  displayName         String
+  username            String   @unique
+  bio                 String?
+  avatarUrl           String?
+  avatarThumbnailUrl  String?
+  age                 Int?
+  showAge             Boolean  @default(true)
+  profession          String?
+  lookingFor          String[]
+  languages           String[]
+  isVerified          Boolean  @default(false)
+  profileCompleteness Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interests UserInterest[]
+  hobbies   UserHobby[]
+
+  @@index([username])
+}
+
+model Interest {
+  id       String         @id @default(cuid())
+  name     String         @unique
+  emoji    String
+  category String
+  isActive Boolean        @default(true)
+  users    UserInterest[]
+}
+
+model UserInterest {
+  userId     String
+  interestId String
+  createdAt  DateTime @default(now())
+
+  profile  Profile  @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  interest Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([userId, interestId])
+}
+
+model Hobby {
+  id       String      @id @default(cuid())
+  name     String      @unique
+  emoji    String
+  category String
+  isActive Boolean     @default(true)
+  users    UserHobby[]
+}
+
+model UserHobby {
+  userId    String
+  hobbyId   String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  hobby   Hobby   @relation(fields: [hobbyId], references: [id], onDelete: Cascade)
+
+  @@id([userId, hobbyId])
+}
+
+model UserLocation {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  latitude         Float
+  longitude        Float
+  accuracy         Float?
+  city             String?
+  country          String?
+  updatedAt        DateTime @updatedAt
+  discoveryEnabled Boolean  @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([latitude, longitude])
+}
+
+model LocationPreference {
+  id                   String           @id @default(cuid())
+  userId               String           @unique
+  nearbyVisibility     NearbyVisibility @default(EVERYONE)
+  distanceDisplay      DistanceDisplay  @default(RANGE)
+  discoveryEnabled     Boolean          @default(true)
+  maxDiscoveryRadiusKm Float            @default(10)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PrivacySettings {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  whoCanMessage     String  @default("EVERYONE")
+  whoCanCall        String  @default("CONNECTIONS")
+  whoCanViewProfile String  @default("EVERYONE")
+  whoCanViewStory   String  @default("CONNECTIONS")
+  whoCanViewSnaps   String  @default("CONNECTIONS")
+  showOnlineStatus  Boolean @default(true)
+  showReadReceipts  Boolean @default(true)
+  showLastSeen      Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Connection {
+  id          String           @id @default(cuid())
+  requesterId String
+  receiverId  String
+  status      ConnectionStatus @default(PENDING)
+  message     String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  requester User @relation("ConnectionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiver  User @relation("ConnectionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, receiverId])
+  @@index([requesterId])
+  @@index([receiverId])
+}
+
+model Conversation {
+  id             String   @id @default(cuid())
+  isGroup        Boolean  @default(false)
+  groupName      String?
+  groupAvatarUrl String?
+  lastMessageAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  members  ConversationMember[]
+  messages Message[]
+}
+
+model ConversationMember {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime @default(now())
+  lastReadAt     DateTime @default(now())
+  isMuted        Boolean  @default(false)
+  isAdmin        Boolean  @default(false)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String?
+  messageType    MessageType @default(TEXT)
+  replyToId      String?
+  isEdited       Boolean     @default(false)
+  isDeleted      Boolean     @default(false)
+  deletedAt      DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  conversation     Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender           User              @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo          Message?          @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies          Message[]         @relation("MessageReplies")
+  mediaAttachments MediaAttachment[]
+  reactions        MessageReaction[]
+
+  @@index([conversationId, createdAt])
+}
+
+model MediaAttachment {
+  id             String   @id @default(cuid())
+  messageId      String?
+  snapId         String?
+  storyId        String?
+  nearbySnapId   String?
+  s3Key          String
+  s3Bucket       String
+  contentType    String
+  fileSize       Int
+  width          Int?
+  height         Int?
+  duration       Float?
+  thumbnailS3Key String?
+  createdAt      DateTime @default(now())
+
+  message    Message?    @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  snap       Snap?       @relation(fields: [snapId], references: [id], onDelete: SetNull)
+  story      Story?      @relation(fields: [storyId], references: [id], onDelete: SetNull)
+  nearbySnap NearbySnap? @relation(fields: [nearbySnapId], references: [id], onDelete: SetNull)
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+}
+
+model Snap {
+  id          String         @id @default(cuid())
+  senderId    String
+  content     String?
+  visibility  SnapVisibility @default(PRIVATE)
+  expiry      SnapExpiry     @default(HOURS_24)
+  expiresAt   DateTime?
+  locationLat Float?
+  locationLng Float?
+  radiusKm    Float?
+  viewCount   Int            @default(0)
+  createdAt   DateTime       @default(now())
+
+  sender           User              @relation("SnapSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipients       SnapRecipient[]
+  views            SnapView[]
+  mediaAttachments MediaAttachment[]
+}
+
+model SnapRecipient {
+  snapId   String
+  userId   String
+  viewedAt DateTime?
+
+  snap Snap @relation(fields: [snapId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([snapId, userId])
+}
+
+model SnapView {
+  id       String   @id @default(cuid())
+  snapId   String
+  viewerId String
+  viewedAt DateTime @default(now())
+
+  snap   Snap @relation(fields: [snapId], references: [id], onDelete: Cascade)
+  viewer User @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@unique([snapId, viewerId])
+}
+
+model Story {
+  id         String          @id @default(cuid())
+  userId     String
+  content    String?
+  visibility StoryVisibility @default(FRIENDS)
+  viewCount  Int             @default(0)
+  expiresAt  DateTime
+  createdAt  DateTime        @default(now())
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  views            StoryView[]
+  mediaAttachments MediaAttachment[]
+
+  @@index([userId, expiresAt])
+}
+
+model StoryView {
+  id       String   @id @default(cuid())
+  storyId  String
+  viewerId String
+  viewedAt DateTime @default(now())
+
+  story  Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  viewer User  @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, viewerId])
+}
+
+model NearbySnap {
+  id        String   @id @default(cuid())
+  creatorId String
+  content   String?
+  latitude  Float
+  longitude Float
+  radiusKm  Float    @default(5)
+  expiresAt DateTime
+  viewCount Int      @default(0)
+  createdAt DateTime @default(now())
+
+  creator          User              @relation("NearbySnapCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  views            NearbySnapView[]
+  mediaAttachments MediaAttachment[]
+
+  @@index([latitude, longitude, expiresAt])
+}
+
+model NearbySnapView {
+  id           String   @id @default(cuid())
+  nearbySnapId String
+  viewerId     String
+  viewedAt     DateTime @default(now())
+
+  nearbySnap NearbySnap @relation(fields: [nearbySnapId], references: [id], onDelete: Cascade)
+  viewer     User       @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+}
+
+model Call {
+  id         String     @id @default(cuid())
+  callerId   String
+  receiverId String
+  callType   CallType
+  status     CallStatus @default(RINGING)
+  startedAt  DateTime?
+  endedAt    DateTime?
+  duration   Int?
+  createdAt  DateTime   @default(now())
+
+  caller   User @relation("CallCaller", fields: [callerId], references: [id], onDelete: Cascade)
+  receiver User @relation("CallReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  data      Json             @default("{}")
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+model Report {
+  id             String       @id @default(cuid())
+  reporterId     String
+  reportedUserId String
+  reason         ReportReason
+  description    String?
+  status         ReportStatus @default(PENDING)
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  reviewNotes    String?
+  createdAt      DateTime     @default(now())
+
+  reporter     User @relation("ReporterUser", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUser User @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("BlockerUser", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlockedUser", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+}
+
+model UserSession {
+  id               String   @id @default(cuid())
+  userId           String
+  refreshTokenHash String
+  deviceId         String?
+  ipAddress        String?
+  userAgent        String?
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Device {
+  id        String   @id @default(cuid())
+  userId    String
+  pushToken String
+  platform  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pushToken])
+}

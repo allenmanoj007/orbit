@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Orbit",
+    "slug": "orbit",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#6C63FF",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.orbit.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Orbit requires camera access to capture snaps, stories, and make video calls.",
+        "NSMicrophoneUsageDescription": "Orbit requires microphone access to record voice messages and make calls.",
+        "NSLocationWhenInUseUsageDescription": "Orbit uses your approximate location to help you discover people nearby."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#6C63FF"
+      },
+      "package": "com.orbit.app",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    }
+  }
+}

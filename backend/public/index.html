@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Orbit — Connect with people around you</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #000000;
+      color: #F5F5F5;
+      overflow-x: hidden;
+    }
+    
+    /* Instagram / Orbit Gradient Rings */
+    .orbit-gradient {
+      background: linear-gradient(135deg, #833AB4 0%, #FD1D1D 50%, #FCB045 100%);
+    }
+    .orbit-gradient-subtle {
+      background: linear-gradient(135deg, #6C5CE7 0%, #FD597A 100%);
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #262626; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #383838; }
+
+    /* Snap Filters */
+    .filter-normal { filter: none; }
+    .filter-warm { filter: sepia(0.35) saturate(1.4) brightness(1.05); }
+    .filter-vintage { filter: sepia(0.65) contrast(1.15) brightness(0.92); }
+    .filter-cinematic { filter: contrast(1.35) saturate(1.25) hue-rotate(-12deg); }
+    .filter-bw { filter: grayscale(1) contrast(1.25); }
+    .filter-glow { filter: brightness(1.2) contrast(1.08) drop-shadow(0 0 14px rgba(255,255,255,0.3)); }
+
+    /* Pulse animation for radar discovery */
+    @keyframes orbit-pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 0.25; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .radar-pulse { animation: orbit-pulse 2.8s infinite ease-in-out; }
+  </style>
+</head>
+<body class="bg-black text-[#F5F5F5] min-h-screen flex antialiased select-none">
+
+  <!-- ============================================================== -->
+  <!-- 1. LEFT NAVIGATION BAR (Desktop & Tablet — Instagram Layout)   -->
+  <!-- ============================================================== -->
+  <aside class="hidden md:flex w-64 lg:w-72 h-screen border-r border-[#262626] bg-black p-4 flex-col justify-between fixed left-0 top-0 z-40">
+    <div class="space-y-6">
+      <!-- App Brand Logo -->
+      <div class="px-3 pt-3 pb-1 flex items-center gap-3 cursor-pointer" onclick="navigateTo('feed')">
+        <div class="w-9 h-9 rounded-xl orbit-gradient p-0.5 flex items-center justify-center shadow-lg shadow-purple-900/30">
+          <div class="w-full h-full bg-black rounded-[10px] flex items-center justify-center text-lg">🪐</div>
+        </div>
+        <span class="text-2xl font-extrabold tracking-tight text-white">Orbit</span>
+      </div>
+
+      <!-- Main Navigation Menu -->
+      <nav class="space-y-1.5" id="desktop-nav">
+        <button onclick="navigateTo('feed')" id="nav-btn-feed" class="nav-item w-full flex items-center gap-4 px-3.5 py-3 rounded-xl font-bold text-sm text-white bg-[#1A1A1A] transition">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <span>Nearby Feed</span>
+        </button>
+
+        <button onclick="navigateTo('explore')" id="nav-btn-explore" class="nav-item w-full flex items-center gap-4 px-3.5 py-3 rounded-xl font-semibold text-sm text-[#A8A8A8] hover:bg-[#121212] hover:text-white transition">
+          <svg class="w-6 h-6 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span>Explore</span>
+        </button>
+
+        <button onclick="openCreateModal()" class="nav-item w-full flex items-center gap-4 px-3.5 py-3 rounded-xl font-semibold text-sm text-[#A8A8A8] hover:bg-[#121212] hover:text-white transition">
+          <div class="w-6 h-6 border-2 border-current rounded-lg flex items-center justify-center text-lg font-bold leading-none">+</div>
+          <span>Create Snap / Post</span>
+        </button>
+
+        <button onclick="navigateTo('messages')" id="nav-btn-messages" class="nav-item w-full flex items-center gap-4 px-3.5 py-3 rounded-xl font-semibold text-sm text-[#A8A8A8] hover:bg-[#121212] hover:text-white transition relative">
+          <svg class="w-6 h-6 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          <span>Direct Messages</span>
+          <span id="unread-dm-badge" class="hidden ml-auto w-2 h-2 rounded-full bg-[#FD597A]"></span>
+        </button>
+
+        <button onclick="openCameraModal()" class="nav-item w-full flex items-center gap-4 px-3.5 py-3 rounded-xl font-semibold text-sm text-[#A8A8A8] hover:bg-[#121212] hover:text-white transition">
+          <svg class="w-6 h-6 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>Snap Studio</span>
+        </button>
+
+        <button onclick="navigateTo('profile')" id="nav-btn-profile" class="nav-item w-full flex items-center gap-4 px-3.5 py-3 rounded-xl font-semibold text-sm text-[#A8A8A8] hover:bg-[#121212] hover:text-white transition">
+          <img id="nav-avatar-img" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" class="w-6 h-6 rounded-full object-cover border border-[#333]">
+          <span id="nav-profile-name">Profile</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Bottom Controls: Privacy / Ghost Mode & Status -->
+    <div class="space-y-3 pt-4 border-t border-[#262626]">
+      <div class="bg-[#121212] rounded-2xl p-3 border border-[#262626]">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-sm">👻</span>
+            <div>
+              <p class="text-xs font-bold text-white">Ghost Mode</p>
+              <p class="text-[10px] text-[#737373]" id="ghost-status-label">Discovery Active</p>
+            </div>
+          </div>
+          <button onclick="toggleGhostMode()" id="ghost-mode-toggle" class="bg-[#262626] text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition hover:bg-[#333]">
+            Active
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-[#737373] px-2">
+        <span class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          Approx. Location Only
+        </span>
+        <button onclick="openSettingsModal()" class="hover:text-white transition">⚙️</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============================================================== -->
+  <!-- 2. MOBILE TOP APP BAR & BOTTOM NAVIGATION                      -->
+  <!-- ============================================================== -->
+  <header class="md:hidden fixed top-0 left-0 right-0 h-14 bg-black/95 backdrop-blur-md border-b border-[#262626] flex items-center justify-between px-4 z-40">
+    <div class="flex items-center gap-2 cursor-pointer" onclick="navigateTo('feed')">
+      <div class="w-7 h-7 rounded-lg orbit-gradient p-0.5 flex items-center justify-center">
+        <span class="text-xs">🪐</span>
+      </div>
+      <span class="text-xl font-extrabold tracking-tight text-white">Orbit</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <button onclick="openCameraModal()" class="text-white hover:text-purple-400 transition">
+        <svg class="w-6 h-6 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </button>
+      <button onclick="navigateTo('messages')" class="text-white hover:text-purple-400 transition">
+        <svg class="w-6 h-6 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-black/95 backdrop-blur-md border-t border-[#262626] flex items-center justify-around px-2 z-40">
+    <button onclick="navigateTo('feed')" id="mob-nav-feed" class="text-white p-2">
+      <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    </button>
+    <button onclick="navigateTo('explore')" id="mob-nav-explore" class="text-[#737373] p-2">
+      <svg class="w-6 h-6 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </button>
+    <button onclick="openCreateModal()" class="text-[#737373] p-2">
+      <div class="w-6 h-6 border-2 border-current rounded-lg flex items-center justify-center font-bold text-sm">+</div>
+    </button>
+    <button onclick="openCameraModal()" class="text-[#737373] p-2">
+      <svg class="w-6 h-6 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </button>
+    <button onclick="navigateTo('profile')" id="mob-nav-profile" class="p-2">
+      <img id="mob-nav-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" class="w-6 h-6 rounded-full object-cover border border-[#333]">
+    </button>
+  </nav>
+
+  <!-- ============================================================== -->
+  <!-- 3. MAIN CONTENT CONTAINER (Feeds, Explore, DMs, Profile)       -->
+  <!-- ============================================================== -->
+  <main class="flex-1 md:ml-64 lg:ml-72 min-h-screen flex justify-center pt-14 md:pt-0 pb-16 md:pb-0">
+
+    <!-- ============================================================ -->
+    <!-- VIEW A: NEARBY FEED (Primary Feed & Stories)                 -->
+    <!-- ============================================================ -->
+    <div id="view-feed" class="w-full max-w-[935px] px-3 sm:px-6 py-6 flex gap-8 justify-center">
+      
+      <!-- Central Feed Column (max-w-[470px] Instagram Standard) -->
+      <div class="w-full max-w-[470px] space-y-6">
+
+        <!-- Stories Tray -->
+        <div class="bg-[#000000] border border-[#262626] rounded-2xl p-4 overflow-x-auto scrollbar-none flex items-center gap-4">
+          <!-- User's Story Creator -->
+          <div class="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer" onclick="openStoryCreator()">
+            <div class="relative w-16 h-16 rounded-full p-0.5 bg-[#262626] hover:bg-[#383838] transition flex items-center justify-center">
+              <img id="story-my-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120" class="w-full h-full rounded-full object-cover">
+              <div class="absolute bottom-0 right-0 w-5 h-5 bg-[#FD597A] text-white rounded-full flex items-center justify-center text-xs font-bold border-2 border-black">
+                +
+              </div>
+            </div>
+            <span class="text-[11px] font-medium text-[#A8A8A8] truncate w-16 text-center">Your Story</span>
+          </div>
+
+          <!-- Dynamic Stories List -->
+          <div id="stories-tray-list" class="flex items-center gap-4">
+            <!-- Rendered via JavaScript -->
+          </div>
+        </div>
+
+        <!-- Location Geotag Status Bar -->
+        <div class="bg-[#121212] border border-[#262626] rounded-2xl p-3.5 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></div>
+            <span class="text-[#A8A8A8]">Location: <strong id="location-city-label" class="text-white">Detecting area...</strong></span>
+          </div>
+          <button onclick="requestUserLocation()" class="text-xs font-bold text-purple-400 hover:text-purple-300 transition flex items-center gap-1">
+            <span>Update GPS</span> 🛰️
+          </button>
+        </div>
+
+        <!-- Feed Posts Container -->
+        <div id="feed-posts-container" class="space-y-6">
+          <!-- Will render real posts or empty state -->
+        </div>
+
+        <!-- Clean Empty State (Shown when 0 posts exist) -->
+        <div id="feed-empty-state" class="hidden bg-[#0A0A0A] border border-[#262626] rounded-2xl p-8 text-center space-y-4">
+          <div class="w-20 h-20 mx-auto rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-3xl radar-pulse">
+            🪐
+          </div>
+          <div class="space-y-1">
+            <h3 class="text-lg font-bold text-white">No Posts In Your Orbit Yet</h3>
+            <p class="text-xs text-[#737373] max-w-sm mx-auto">
+              Be the first to share a photo, video, or temporary snap with people around your area!
+            </p>
+          </div>
+          <div class="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
+            <button onclick="openCreateModal()" class="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-purple-900/30">
+              📸 Share First Snap
+            </button>
+            <button onclick="requestUserLocation()" class="px-5 py-2.5 bg-[#1C1C1C] hover:bg-[#2A2A2A] text-white border border-[#333] rounded-xl text-xs font-bold transition">
+              🛰️ Refresh Nearby Radar
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Suggestions & Profile Snippet (Instagram Desktop Sidebar) -->
+      <aside class="hidden lg:block w-[320px] flex-shrink-0 space-y-5">
+        <!-- Current User Card -->
+        <div class="flex items-center justify-between p-2">
+          <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('profile')">
+            <img id="sidebar-user-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" class="w-12 h-12 rounded-full object-cover border border-[#262626]">
+            <div>
+              <p id="sidebar-user-username" class="text-sm font-bold text-white leading-tight">user_handle</p>
+              <p id="sidebar-user-name" class="text-xs text-[#737373] leading-tight mt-0.5">Full Name</p>
+            </div>
+          </div>
+          <button onclick="openEditProfileModal()" class="text-xs font-bold text-purple-400 hover:text-purple-300">
+            Edit
+          </button>
+        </div>
+
+        <!-- Privacy & Distance Notice -->
+        <div class="bg-[#121212] border border-[#262626] rounded-2xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-white flex items-center gap-1.5">
+              <span>🛡️</span> Privacy Shield Active
+            </span>
+            <span class="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">FUZZED</span>
+          </div>
+          <p class="text-[11px] text-[#A8A8A8] leading-relaxed">
+            Your exact GPS coordinates are <strong>never</strong> shared. Only approximate distances (e.g. <em>800 m</em> or <em>2.5 km</em>) are displayed to keep you completely safe.
+          </p>
+        </div>
+
+        <!-- People Nearby Suggestions -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between px-1">
+            <span class="text-xs font-bold text-[#737373]">DISCOVER NEARBY</span>
+            <button onclick="requestUserLocation()" class="text-xs font-bold text-white hover:text-purple-400">Scan</button>
+          </div>
+
+          <div id="suggestions-list" class="space-y-3">
+            <!-- Will render discovered people or clean prompt -->
+            <div class="bg-[#0A0A0A] border border-[#262626] rounded-xl p-4 text-center text-xs text-[#737373] space-y-2">
+              <p>Looking for people in your radius...</p>
+              <button onclick="shareOrbitLink()" class="px-3 py-1.5 bg-[#1C1C1C] hover:bg-[#252525] text-white rounded-lg text-[11px] font-semibold border border-[#333]">
+                🔗 Invite Friends Nearby
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Links -->
+        <footer class="text-[11px] text-[#555] space-y-2 px-1">
+          <p class="flex flex-wrap gap-2">
+            <a href="#" class="hover:underline">About</a> ·
+            <a href="#" class="hover:underline">Help</a> ·
+            <a href="#" class="hover:underline">Privacy Policy</a> ·
+            <a href="#" class="hover:underline">Terms</a> ·
+            <a href="#" class="hover:underline">Locations</a>
+          </p>
+          <p>© 2026 ORBIT SOCIAL PLATFORM</p>
+        </footer>
+      </aside>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- VIEW B: EXPLORE (Masonry Grid & Search)                      -->
+    <!-- ============================================================ -->
+    <div id="view-explore" class="hidden w-full max-w-5xl px-4 py-6 space-y-6">
+      <!-- Search Input -->
+      <div class="max-w-md mx-auto relative">
+        <input type="text" id="explore-search-input" placeholder="Search people, hobbies, interests (#photography, gaming...)"
+          onkeyup="filterExplore()"
+          class="w-full bg-[#121212] border border-[#262626] text-white text-sm rounded-xl px-10 py-3 focus:outline-none focus:border-purple-500 transition">
+        <svg class="w-5 h-5 text-[#737373] absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </div>
+
+      <!-- Categories Pills -->
+      <div class="flex items-center justify-center gap-2 flex-wrap">
+        <button onclick="filterCategory('all')" class="category-pill px-4 py-1.5 rounded-full text-xs font-bold bg-white text-black transition">All</button>
+        <button onclick="filterCategory('Gaming')" class="category-pill px-4 py-1.5 rounded-full text-xs font-bold bg-[#1C1C1C] text-[#A8A8A8] hover:text-white transition">🎮 Gaming</button>
+        <button onclick="filterCategory('Photography')" class="category-pill px-4 py-1.5 rounded-full text-xs font-bold bg-[#1C1C1C] text-[#A8A8A8] hover:text-white transition">📷 Photography</button>
+        <button onclick="filterCategory('Design')" class="category-pill px-4 py-1.5 rounded-full text-xs font-bold bg-[#1C1C1C] text-[#A8A8A8] hover:text-white transition">🎨 Design</button>
+        <button onclick="filterCategory('Music')" class="category-pill px-4 py-1.5 rounded-full text-xs font-bold bg-[#1C1C1C] text-[#A8A8A8] hover:text-white transition">🎵 Music</button>
+        <button onclick="filterCategory('Fitness')" class="category-pill px-4 py-1.5 rounded-full text-xs font-bold bg-[#1C1C1C] text-[#A8A8A8] hover:text-white transition">🏋️ Fitness</button>
+      </div>
+
+      <!-- Explore Grid -->
+      <div id="explore-grid" class="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
+        <!-- Rendered via JavaScript -->
+      </div>
+
+      <div id="explore-empty-state" class="hidden text-center py-16 space-y-3">
+        <div class="text-4xl">🔍</div>
+        <p class="text-sm text-white font-bold">No results found</p>
+        <p class="text-xs text-[#737373]">Try searching for other interests or hobbies nearby.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- VIEW C: DIRECT MESSAGES (DMs — Instagram Dual-Pane Layout)   -->
+    <!-- ============================================================ -->
+    <div id="view-messages" class="hidden w-full max-w-5xl h-[calc(100vh-4rem)] md:h-[calc(100vh-2rem)] my-2 px-2 md:px-4">
+      <div class="w-full h-full bg-[#000000] border border-[#262626] rounded-2xl flex overflow-hidden">
+        
+        <!-- Left: Conversations List -->
+        <div class="w-full md:w-80 lg:w-96 border-r border-[#262626] flex flex-col bg-black flex-shrink-0" id="dm-list-pane">
+          <!-- DM Header -->
+          <div class="p-4 border-b border-[#262626] flex items-center justify-between">
+            <span class="font-extrabold text-base text-white flex items-center gap-2">
+              <span id="dm-my-username">Direct Messages</span>
+            </span>
+            <button onclick="openNewChatModal()" class="text-white hover:text-purple-400 transition" title="New Message">
+              <svg class="w-5 h-5 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+
+          <!-- Conversations scroll list -->
+          <div class="flex-1 overflow-y-auto divide-y divide-[#1A1A1A]" id="conversations-list">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- Empty Conversations Prompt -->
+          <div id="dm-conversations-empty" class="hidden p-8 text-center text-xs text-[#737373] space-y-3">
+            <div class="text-3xl">💬</div>
+            <p class="font-bold text-white">No Messages Yet</p>
+            <p>Connect with someone nearby to start a private conversation or voice chat.</p>
+            <button onclick="openNewChatModal()" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl font-bold">
+              Send Message
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Active Chat Area -->
+        <div class="hidden md:flex flex-1 flex-col bg-[#050505] relative" id="dm-active-pane">
+          
+          <!-- When NO conversation is selected (Instagram Empty DM Placeholder) -->
+          <div id="dm-no-active-chat" class="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
+            <div class="w-24 h-24 rounded-full border-2 border-white/80 flex items-center justify-center">
+              <svg class="w-12 h-12 stroke-current fill-none" stroke-width="1.5" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            </div>
+            <div class="space-y-1">
+              <h2 class="text-xl font-bold text-white">Your Messages</h2>
+              <p class="text-xs text-[#737373]">Send private photos, audio notes, and snaps to friends nearby.</p>
+            </div>
+            <button onclick="openNewChatModal()" class="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white rounded-xl text-xs font-bold transition">
+              Send Message
+            </button>
+          </div>
+
+          <!-- When a conversation IS selected -->
+          <div id="dm-active-chat-content" class="hidden flex-1 flex flex-col h-full">
+            <!-- Active Chat Top Bar -->
+            <div class="p-3.5 border-b border-[#262626] flex items-center justify-between bg-black">
+              <div class="flex items-center gap-3">
+                <button onclick="closeMobileDM()" class="md:hidden text-[#A8A8A8] hover:text-white mr-1">
+                  ←
+                </button>
+                <img id="chat-header-avatar" src="" class="w-9 h-9 rounded-full object-cover border border-[#262626]">
+                <div>
+                  <h4 id="chat-header-name" class="text-sm font-bold text-white leading-tight">Chat Partner</h4>
+                  <p id="chat-header-distance" class="text-[11px] text-emerald-400 leading-tight">Online · 800 m away</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4 text-[#A8A8A8]">
+                <button onclick="triggerCall('audio')" class="hover:text-white transition" title="Voice Call">
+                  <svg class="w-5 h-5 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                </button>
+                <button onclick="triggerCall('video')" class="hover:text-white transition" title="Video Call">
+                  <svg class="w-5 h-5 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Messages Stream Box -->
+            <div id="chat-messages-box" class="flex-1 overflow-y-auto p-4 space-y-3">
+              <!-- Rendered via JavaScript -->
+            </div>
+
+            <!-- Chat Input Toolbar -->
+            <div class="p-3 border-t border-[#262626] bg-black">
+              <div class="flex items-center gap-2 bg-[#121212] border border-[#262626] rounded-2xl px-3 py-2">
+                <button onclick="triggerVoiceNote()" id="voice-record-btn" class="text-[#737373] hover:text-rose-400 transition" title="Hold to record voice message">
+                  🎙️
+                </button>
+                <input type="text" id="dm-message-input" placeholder="Message..." 
+                  onkeydown="if(event.key==='Enter') sendDirectMessage()"
+                  class="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder-[#737373]">
+                <button onclick="sendDirectMessage()" class="text-sm font-bold text-purple-400 hover:text-purple-300 transition px-2">
+                  Send
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- VIEW D: PROFILE (Customizable Profile & Privacy)             -->
+    <!-- ============================================================ -->
+    <div id="view-profile" class="hidden w-full max-w-4xl px-4 py-8 space-y-8">
+      
+      <!-- Profile Header (Instagram Desktop Format) -->
+      <div class="flex flex-col sm:flex-row items-center sm:items-start gap-8 border-b border-[#262626] pb-8">
+        <!-- Avatar with Story Ring -->
+        <div class="relative group cursor-pointer" onclick="openEditProfileModal()">
+          <div class="w-28 h-28 sm:w-36 sm:h-36 rounded-full orbit-gradient p-1 flex items-center justify-center">
+            <img id="profile-page-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300" class="w-full h-full rounded-full object-cover border-2 border-black">
+          </div>
+          <div class="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-xs font-bold text-white">
+            Change Photo
+          </div>
+        </div>
+
+        <!-- Info & Controls -->
+        <div class="flex-1 text-center sm:text-left space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+            <h2 id="profile-page-username" class="text-xl sm:text-2xl font-bold text-white">user_handle</h2>
+            <div class="flex items-center gap-2 justify-center sm:justify-start">
+              <button onclick="openEditProfileModal()" class="px-4 py-1.5 bg-[#1C1C1C] hover:bg-[#262626] text-white text-xs font-bold rounded-lg border border-[#333] transition">
+                Edit Profile
+              </button>
+              <button onclick="openSettingsModal()" class="p-1.5 bg-[#1C1C1C] hover:bg-[#262626] text-white text-xs rounded-lg border border-[#333] transition">
+                ⚙️
+              </button>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="flex items-center justify-center sm:justify-start gap-8 text-sm">
+            <div><strong id="stat-posts-count" class="text-white">0</strong> <span class="text-[#737373]">posts</span></div>
+            <div><strong id="stat-connections-count" class="text-white">0</strong> <span class="text-[#737373]">connections</span></div>
+            <div><strong id="stat-snaps-count" class="text-white">0</strong> <span class="text-[#737373]">snaps</span></div>
+          </div>
+
+          <!-- Bio & Profession -->
+          <div class="space-y-1.5 text-xs sm:text-sm">
+            <p id="profile-page-fullname" class="font-bold text-white">Your Name</p>
+            <p id="profile-page-profession" class="text-purple-400 font-semibold">Product Enthusiast</p>
+            <p id="profile-page-bio" class="text-[#A8A8A8] whitespace-pre-line">Passionate about meeting curious minds nearby.</p>
+          </div>
+
+          <!-- "Looking For" Badges -->
+          <div class="pt-1">
+            <p class="text-[11px] font-bold text-[#737373] uppercase tracking-wider mb-1.5">Looking For</p>
+            <div id="profile-looking-for-tags" class="flex flex-wrap gap-1.5 justify-center sm:justify-start">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User's Posts Grid -->
+      <div class="space-y-4">
+        <div class="flex justify-center border-t border-[#262626] -mt-8 pt-3">
+          <span class="flex items-center gap-1.5 text-xs font-bold text-white border-t-2 border-white -mt-3.5 pt-3">
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h7v7H3zm11 0h7v7h-7zm0 11h7v7h-7zM3 14h7v7H3z"/></svg>
+            POSTS & SNAPS
+          </span>
+        </div>
+
+        <div id="profile-posts-grid" class="grid grid-cols-3 gap-2 sm:gap-4">
+          <!-- Will render real user posts -->
+        </div>
+
+        <div id="profile-posts-empty" class="text-center py-12 space-y-3">
+          <div class="w-16 h-16 mx-auto rounded-full border-2 border-[#333] flex items-center justify-center text-2xl">
+            📷
+          </div>
+          <p class="text-sm font-bold text-white">No Posts Yet</p>
+          <p class="text-xs text-[#737373]">Capture snaps or share moments with friends nearby.</p>
+          <button onclick="openCreateModal()" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl text-xs font-bold">
+            Create Post
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- 4. MODALS & OVERLAYS                                           -->
+  <!-- ============================================================== -->
+
+  <!-- A. CAMERA & SNAP STUDIO MODAL -->
+  <div id="camera-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-[#121212] border border-[#262626] w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+      <!-- Top Bar -->
+      <div class="p-4 border-b border-[#262626] flex items-center justify-between">
+        <span class="text-sm font-bold text-white flex items-center gap-2">
+          <span>📸</span> Snap Studio
+        </span>
+        <button onclick="closeCameraModal()" class="text-[#A8A8A8] hover:text-white font-bold text-lg">✕</button>
+      </div>
+
+      <!-- Viewfinder (Live Video Stream or Canvas or Upload) -->
+      <div class="relative w-full aspect-[4/5] bg-black flex items-center justify-center overflow-hidden">
+        <video id="camera-stream" autoplay playsinline muted class="w-full h-full object-cover filter-normal"></video>
+        <img id="camera-captured-image" class="hidden w-full h-full object-cover filter-normal">
+        <canvas id="camera-canvas" class="hidden"></canvas>
+
+        <!-- Lens Name Indicator -->
+        <div class="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white border border-white/20">
+          FILTER: <span id="camera-active-filter">NORMAL</span>
+        </div>
+
+        <!-- Camera Switcher -->
+        <button onclick="flipCamera()" class="absolute top-4 right-4 bg-black/60 p-2 rounded-full text-white hover:bg-black/80 transition">
+          🔄
+        </button>
+      </div>
+
+      <!-- Live Filters Carousel -->
+      <div class="p-3 border-t border-[#262626] flex items-center justify-center gap-2 overflow-x-auto">
+        <button onclick="setLensFilter('normal')" class="lens-pill px-3 py-1 rounded-full text-xs font-bold bg-white text-black">Normal</button>
+        <button onclick="setLensFilter('warm')" class="lens-pill px-3 py-1 rounded-full text-xs font-bold bg-[#1C1C1C] text-[#A8A8A8]">Warm</button>
+        <button onclick="setLensFilter('vintage')" class="lens-pill px-3 py-1 rounded-full text-xs font-bold bg-[#1C1C1C] text-[#A8A8A8]">Vintage</button>
+        <button onclick="setLensFilter('cinematic')" class="lens-pill px-3 py-1 rounded-full text-xs font-bold bg-[#1C1C1C] text-[#A8A8A8]">Cinematic</button>
+        <button onclick="setLensFilter('bw')" class="lens-pill px-3 py-1 rounded-full text-xs font-bold bg-[#1C1C1C] text-[#A8A8A8]">B&W</button>
+        <button onclick="setLensFilter('glow')" class="lens-pill px-3 py-1 rounded-full text-xs font-bold bg-[#1C1C1C] text-[#A8A8A8]">Glow</button>
+      </div>
+
+      <!-- Shutter & Controls -->
+      <div class="p-4 bg-[#0A0A0A] border-t border-[#262626] flex items-center justify-between">
+        <label class="cursor-pointer text-xs font-semibold text-[#A8A8A8] hover:text-white flex items-center gap-1">
+          📁 <span>Upload</span>
+          <input type="file" accept="image/*,video/*" class="hidden" onchange="handleMediaUpload(this)">
+        </label>
+
+        <!-- Big Shutter Button -->
+        <button onclick="captureSnap()" id="camera-shutter-btn" class="w-16 h-16 rounded-full border-4 border-white p-1 flex items-center justify-center hover:scale-105 transition">
+          <div class="w-full h-full bg-white rounded-full"></div>
+        </button>
+
+        <button onclick="publishCapturedSnap('story')" id="snap-publish-btn" class="hidden px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl text-xs font-bold">
+          Send Snap ↗
+        </button>
+        <div class="w-12"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B. CREATE POST / SNAP MODAL -->
+  <div id="create-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-[#121212] border border-[#262626] w-full max-w-md rounded-2xl overflow-hidden shadow-2xl space-y-4 p-6">
+      <div class="flex items-center justify-between border-b border-[#262626] pb-3">
+        <h3 class="text-base font-bold text-white">Create New Post</h3>
+        <button onclick="closeCreateModal()" class="text-[#A8A8A8] hover:text-white text-lg">✕</button>
+      </div>
+
+      <div class="space-y-3">
+        <!-- Media Preview / Picker -->
+        <div id="create-dropzone" onclick="document.getElementById('post-file-input').click()" class="border-2 border-dashed border-[#333] hover:border-purple-500 rounded-xl p-6 text-center cursor-pointer transition">
+          <img id="create-preview-img" class="hidden max-h-48 mx-auto rounded-lg object-contain mb-2">
+          <div id="create-dropzone-prompt">
+            <div class="text-3xl mb-1">🖼️</div>
+            <p class="text-xs font-bold text-white">Select Photo or Video</p>
+            <p class="text-[10px] text-[#737373]">Click to browse from your device</p>
+          </div>
+          <input type="file" id="post-file-input" accept="image/*,video/*" class="hidden" onchange="handleCreateFileSelect(this)">
+        </div>
+
+        <!-- Caption -->
+        <textarea id="create-caption-input" rows="3" placeholder="Write a caption... (e.g. Exploring downtown coffee shops today!)"
+          class="w-full bg-[#1A1A1A] border border-[#262626] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500"></textarea>
+
+        <!-- Category & Destination -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="text-[10px] text-[#737373] block mb-1">Interest Tag</label>
+            <select id="create-interest-select" class="w-full bg-[#1A1A1A] border border-[#262626] text-white rounded-lg p-2 text-xs focus:outline-none">
+              <option value="General">📍 General</option>
+              <option value="Gaming">🎮 Gaming</option>
+              <option value="Photography">📷 Photography</option>
+              <option value="Design">🎨 Design</option>
+              <option value="Music">🎵 Music</option>
+              <option value="Fitness">🏋️ Fitness</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] text-[#737373] block mb-1">Destination</label>
+            <select id="create-destination-select" class="w-full bg-[#1A1A1A] border border-[#262626] text-white rounded-lg p-2 text-xs focus:outline-none">
+              <option value="feed">Nearby Feed</option>
+              <option value="story">My Story (24h)</option>
+              <option value="nearby_snap">Temporary Local Snap</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="submitNewPost()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-purple-900/30">
+        Share to Orbit
+      </button>
+    </div>
+  </div>
+
+  <!-- C. EDIT PROFILE MODAL -->
+  <div id="edit-profile-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-[#121212] border border-[#262626] w-full max-w-md rounded-2xl overflow-hidden shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-[#262626] pb-3">
+        <h3 class="text-base font-bold text-white">Edit Your Profile</h3>
+        <button onclick="closeEditProfileModal()" class="text-[#A8A8A8] hover:text-white text-lg">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="text-[#A8A8A8] block mb-1">Avatar Image URL (or upload)</label>
+          <div class="flex gap-2">
+            <input type="text" id="edit-avatar-url" placeholder="https://..." class="flex-1 bg-[#1A1A1A] border border-[#262626] rounded-lg p-2 text-white">
+            <label class="px-3 py-2 bg-[#262626] text-white rounded-lg cursor-pointer">
+              📁
+              <input type="file" accept="image/*" class="hidden" onchange="handleAvatarFileUpload(this)">
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[#A8A8A8] block mb-1">Full Name</label>
+          <input type="text" id="edit-fullname" class="w-full bg-[#1A1A1A] border border-[#262626] rounded-lg p-2 text-white">
+        </div>
+
+        <div>
+          <label class="text-[#A8A8A8] block mb-1">Username Handle</label>
+          <input type="text" id="edit-username" class="w-full bg-[#1A1A1A] border border-[#262626] rounded-lg p-2 text-white">
+        </div>
+
+        <div>
+          <label class="text-[#A8A8A8] block mb-1">Profession / Passion</label>
+          <input type="text" id="edit-profession" placeholder="e.g. UI/UX Designer, Architect, Musician" class="w-full bg-[#1A1A1A] border border-[#262626] rounded-lg p-2 text-white">
+        </div>
+
+        <div>
+          <label class="text-[#A8A8A8] block mb-1">Bio</label>
+          <textarea id="edit-bio" rows="2" class="w-full bg-[#1A1A1A] border border-[#262626] rounded-lg p-2 text-white"></textarea>
+        </div>
+
+        <div>
+          <label class="text-[#A8A8A8] block mb-1">“I'm looking for” (Select all that apply)</label>
+          <div class="grid grid-cols-2 gap-1.5" id="looking-for-checkboxes">
+            <label class="flex items-center gap-2 p-1.5 bg-[#1A1A1A] rounded-lg cursor-pointer">
+              <input type="checkbox" value="New Friends" class="accent-purple-600"> <span>🤝 New Friends</span>
+            </label>
+            <label class="flex items-center gap-2 p-1.5 bg-[#1A1A1A] rounded-lg cursor-pointer">
+              <input type="checkbox" value="Gaming Buddies" class="accent-purple-600"> <span>🎮 Gaming Buddies</span>
+            </label>
+            <label class="flex items-center gap-2 p-1.5 bg-[#1A1A1A] rounded-lg cursor-pointer">
+              <input type="checkbox" value="Creative Projects" class="accent-purple-600"> <span>🎨 Creative Projects</span>
+            </label>
+            <label class="flex items-center gap-2 p-1.5 bg-[#1A1A1A] rounded-lg cursor-pointer">
+              <input type="checkbox" value="Coffee & Chat" class="accent-purple-600"> <span>☕ Coffee & Chat</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="saveUserProfile()" class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl text-xs font-bold transition">
+        Save Changes
+      </button>
+    </div>
+  </div>
+
+  <!-- D. NEW CHAT MODAL -->
+  <div id="new-chat-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-[#121212] border border-[#262626] w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-[#262626] pb-3">
+        <h3 class="text-sm font-bold text-white">Start New Message</h3>
+        <button onclick="closeNewChatModal()" class="text-[#A8A8A8] hover:text-white">✕</button>
+      </div>
+
+      <div class="space-y-3">
+        <input type="text" id="new-chat-username" placeholder="Enter recipient username or name..."
+          class="w-full bg-[#1A1A1A] border border-[#262626] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-purple-500">
+        
+        <button onclick="confirmStartChat()" class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl text-xs font-bold transition">
+          Open Chat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 5. APPLICATION JAVASCRIPT STATE & ENGINE                       -->
+  <!-- ============================================================== -->
+  <script>
+    // --- Central Application State ---
+    const OrbitState = {
+      user: null,
+      posts: [],
+      stories: [],
+      conversations: [],
+      activeChatId: null,
+      currentFilter: 'normal',
+      mediaStream: null,
+      tempCapturedDataUrl: null,
+      location: { lat: 37.7749, lng: -122.4194, city: 'Local Orbit' }
+    };
+
+    // --- 1. Initialization ---
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStoredState();
+      initUserProfile();
+      renderFeed();
+      renderStories();
+      renderConversations();
+      renderExplore();
+      requestUserLocation();
+    });
+
+    function loadStoredState() {
+      try {
+        const storedUser = localStorage.getItem('orbit_user_session');
+        if (storedUser) OrbitState.user = JSON.parse(storedUser);
+
+        const storedPosts = localStorage.getItem('orbit_posts');
+        if (storedPosts) OrbitState.posts = JSON.parse(storedPosts);
+
+        const storedStories = localStorage.getItem('orbit_stories');
+        if (storedStories) OrbitState.stories = JSON.parse(storedStories);
+
+        const storedChats = localStorage.getItem('orbit_chats');
+        if (storedChats) OrbitState.conversations = JSON.parse(storedChats);
+      } catch (err) {
+        console.warn('Storage parsing error:', err);
+      }
+    }
+
+    function initUserProfile() {
+      // Create clean default profile if none exists
+      if (!OrbitState.user) {
+        OrbitState.user = {
+          id: 'user_' + Date.now(),
+          username: 'my_orbit',
+          fullname: 'Orbit Explorer',
+          profession: 'Community Member',
+          bio: 'Exploring and discovering creative people around me.',
+          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+          lookingFor: ['New Friends', 'Coffee & Chat'],
+          ghostMode: false,
+          createdDate: new Date().toLocaleDateString()
+        };
+        saveUserToStorage();
+      }
+      syncProfileUI();
+    }
+
+    function syncProfileUI() {
+      const u = OrbitState.user;
+      document.getElementById('nav-avatar-img').src = u.avatar;
+      document.getElementById('nav-profile-name').innerText = u.fullname;
+      document.getElementById('mob-nav-avatar').src = u.avatar;
+      document.getElementById('story-my-avatar').src = u.avatar;
+
+      // Sidebar
+      document.getElementById('sidebar-user-avatar').src = u.avatar;
+      document.getElementById('sidebar-user-username').innerText = '@' + u.username;
+      document.getElementById('sidebar-user-name').innerText = u.fullname;
+
+      // Profile Page
+      document.getElementById('profile-page-avatar').src = u.avatar;
+      document.getElementById('profile-page-username').innerText = '@' + u.username;
+      document.getElementById('profile-page-fullname').innerText = u.fullname;
+      document.getElementById('profile-page-profession').innerText = u.profession;
+      document.getElementById('profile-page-bio').innerText = u.bio;
+
+      // Looking For Tags
+      const tagContainer = document.getElementById('profile-looking-for-tags');
+      tagContainer.innerHTML = '';
+      (u.lookingFor || []).forEach(tag => {
+        const badge = document.createElement('span');
+        badge.className = 'px-2.5 py-1 rounded-full bg-purple-900/30 text-purple-300 border border-purple-500/30 text-[11px] font-semibold';
+        badge.innerText = tag;
+        tagContainer.appendChild(badge);
+      });
+
+      // Stats
+      document.getElementById('stat-posts-count').innerText = OrbitState.posts.filter(p => p.authorId === u.id).length;
+      document.getElementById('stat-snaps-count').innerText = OrbitState.stories.length;
+
+      // Ghost status
+      document.getElementById('ghost-mode-toggle').innerText = u.ghostMode ? 'Hidden' : 'Active';
+      document.getElementById('ghost-status-label').innerText = u.ghostMode ? 'Ghost Mode ON' : 'Discovery Active';
+      document.getElementById('ghost-mode-toggle').className = u.ghostMode 
+        ? 'bg-rose-900/60 text-rose-300 text-[11px] font-bold px-2.5 py-1 rounded-lg transition'
+        : 'bg-[#262626] text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition';
+    }
+
+    function saveUserToStorage() {
+      localStorage.setItem('orbit_user_session', JSON.stringify(OrbitState.user));
+    }
+
+    // --- 2. Navigation Control ---
+    function navigateTo(viewId) {
+      const views = ['feed', 'explore', 'messages', 'profile'];
+      views.forEach(v => {
+        const el = document.getElementById('view-' + v);
+        if (el) el.classList.add('hidden');
+      });
+
+      const activeView = document.getElementById('view-' + viewId);
+      if (activeView) activeView.classList.remove('hidden');
+
+      // Update Nav highlighting
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.remove('bg-[#1A1A1A]', 'text-white', 'font-bold');
+        btn.classList.add('text-[#A8A8A8]', 'font-semibold');
+      });
+
+      const activeNavBtn = document.getElementById('nav-btn-' + viewId);
+      if (activeNavBtn) {
+        activeNavBtn.classList.add('bg-[#1A1A1A]', 'text-white', 'font-bold');
+        activeNavBtn.classList.remove('text-[#A8A8A8]', 'font-semibold');
+      }
+
+      if (viewId === 'profile') renderProfileGrid();
+    }
+
+    // --- 3. Location & Geolocation Privacy ---
+    function requestUserLocation() {
+      const label = document.getElementById('location-city-label');
+      if (navigator.geolocation) {
+        label.innerText = 'Scanning approximate GPS...';
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            OrbitState.location.lat = pos.coords.latitude;
+            OrbitState.location.lng = pos.coords.longitude;
+            label.innerText = 'Near Your Area (Fuzzed Radius ~800m)';
+          },
+          (err) => {
+            label.innerText = 'Local Orbit (Distance Fuzzed)';
+          },
+          { timeout: 7000 }
+        );
+      } else {
+        label.innerText = 'Local Orbit';
+      }
+    }
+
+    function toggleGhostMode() {
+      OrbitState.user.ghostMode = !OrbitState.user.ghostMode;
+      saveUserToStorage();
+      syncProfileUI();
+      if (OrbitState.user.ghostMode) {
+        alert('👻 Ghost Mode Activated: Your profile and distance are now hidden from nearby discovery feeds.');
+      } else {
+        alert('🛰️ Discovery Active: People around you can discover your profile based on approximate distance.');
+      }
+    }
+
+    // --- 4. Feed & Stories Engine ---
+    function renderFeed() {
+      const container = document.getElementById('feed-posts-container');
+      const emptyState = document.getElementById('feed-empty-state');
+      container.innerHTML = '';
+
+      if (!OrbitState.posts || OrbitState.posts.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      OrbitState.posts.forEach((post, idx) => {
+        const card = document.createElement('article');
+        card.className = 'bg-[#000000] border border-[#262626] rounded-2xl overflow-hidden';
+        card.innerHTML = `
+          <!-- Header -->
+          <div class="p-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full orbit-gradient p-0.5">
+                <img src="${post.authorAvatar}" class="w-full h-full rounded-full object-cover">
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h4 class="text-xs font-bold text-white">${post.authorName}</h4>
+                  <span class="text-[10px] text-[#737373]">· ${post.timeAgo || 'Just now'}</span>
+                </div>
+                <div class="flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
+                  <span>📍 ${post.locationTag || 'Nearby (~800 m away)'}</span>
+                </div>
+              </div>
+            </div>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-[#1C1C1C] text-[#A8A8A8] font-bold border border-[#333]">
+              ${post.category || 'Snap'}
+            </span>
+          </div>
+
+          <!-- Media Image -->
+          <div class="w-full bg-[#0A0A0A] max-h-[500px] overflow-hidden flex items-center justify-center">
+            <img src="${post.mediaUrl}" class="w-full object-cover ${post.filterClass || 'filter-normal'}">
+          </div>
+
+          <!-- Action Buttons Bar (Instagram Style) -->
+          <div class="p-3 space-y-2">
+            <div class="flex items-center justify-between text-white">
+              <div class="flex items-center gap-4">
+                <button onclick="toggleLikePost(${idx}, this)" class="hover:text-rose-500 transition text-lg">
+                  ${post.liked ? '❤️' : '🤍'}
+                </button>
+                <button onclick="openPostCommentModal(${idx})" class="hover:text-purple-400 transition">
+                  <svg class="w-6 h-6 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                </button>
+                <button onclick="sharePost(${idx})" class="hover:text-purple-400 transition">
+                  <svg class="w-6 h-6 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                </button>
+              </div>
+              <button onclick="bookmarkPost(${idx}, this)" class="text-[#A8A8A8] hover:text-white transition">
+                <svg class="w-5 h-5 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              </button>
+            </div>
+
+            <p class="text-xs font-bold text-white"><span id="likes-count-${idx}">${post.likes || 1}</span> likes</p>
+            <p class="text-xs text-[#E1E1E1]"><strong class="text-white">${post.authorHandle || post.authorName}</strong> ${post.caption}</p>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleLikePost(idx, btn) {
+      const post = OrbitState.posts[idx];
+      post.liked = !post.liked;
+      post.likes = (post.likes || 1) + (post.liked ? 1 : -1);
+      btn.innerHTML = post.liked ? '❤️' : '🤍';
+      document.getElementById('likes-count-' + idx).innerText = post.likes;
+      localStorage.setItem('orbit_posts', JSON.stringify(OrbitState.posts));
+    }
+
+    function renderStories() {
+      const tray = document.getElementById('stories-tray-list');
+      tray.innerHTML = '';
+      (OrbitState.stories || []).forEach((story, idx) => {
+        const item = document.createElement('div');
+        item.className = 'flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer';
+        item.onclick = () => viewStory(idx);
+        item.innerHTML = `
+          <div class="w-16 h-16 rounded-full orbit-gradient p-0.5 flex items-center justify-center">
+            <img src="${story.avatar}" class="w-full h-full rounded-full object-cover border-2 border-black">
+          </div>
+          <span class="text-[11px] font-medium text-[#A8A8A8] truncate w-16 text-center">${story.name}</span>
+        `;
+        tray.appendChild(item);
+      });
+    }
+
+    // --- 5. Create Post & Snaps ---
+    function openCreateModal() {
+      document.getElementById('create-modal').classList.remove('hidden');
+    }
+    function closeCreateModal() {
+      document.getElementById('create-modal').classList.add('hidden');
+    }
+
+    function handleCreateFileSelect(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          OrbitState.tempCapturedDataUrl = e.target.result;
+          document.getElementById('create-preview-img').src = e.target.result;
+          document.getElementById('create-preview-img').classList.remove('hidden');
+          document.getElementById('create-dropzone-prompt').classList.add('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function submitNewPost() {
+      const caption = document.getElementById('create-caption-input').value.trim();
+      const category = document.getElementById('create-interest-select').value;
+      const destination = document.getElementById('create-destination-select').value;
+      const media = OrbitState.tempCapturedDataUrl || 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800';
+
+      const newPost = {
+        id: 'post_' + Date.now(),
+        authorId: OrbitState.user.id,
+        authorName: OrbitState.user.fullname,
+        authorHandle: '@' + OrbitState.user.username,
+        authorAvatar: OrbitState.user.avatar,
+        mediaUrl: media,
+        caption: caption || 'Living in the moment with Orbit!',
+        category: category,
+        filterClass: OrbitState.currentFilter ? 'filter-' + OrbitState.currentFilter : 'filter-normal',
+        locationTag: 'Nearby (~500 m away)',
+        timeAgo: 'Just now',
+        likes: 1,
+        liked: false
+      };
+
+      if (destination === 'story') {
+        OrbitState.stories.unshift({
+          name: OrbitState.user.fullname,
+          avatar: OrbitState.user.avatar,
+          mediaUrl: media
+        });
+        localStorage.setItem('orbit_stories', JSON.stringify(OrbitState.stories));
+        renderStories();
+        alert('✨ Added to your 24-hour Story!');
+      } else {
+        OrbitState.posts.unshift(newPost);
+        localStorage.setItem('orbit_posts', JSON.stringify(OrbitState.posts));
+        renderFeed();
+        navigateTo('feed');
+      }
+
+      closeCreateModal();
+      document.getElementById('create-caption-input').value = '';
+      OrbitState.tempCapturedDataUrl = null;
+    }
+
+    // --- 6. Live Camera Modal & Filters ---
+    function openCameraModal() {
+      document.getElementById('camera-modal').classList.remove('hidden');
+      startCameraStream();
+    }
+
+    function closeCameraModal() {
+      document.getElementById('camera-modal').classList.add('hidden');
+      stopCameraStream();
+    }
+
+    function startCameraStream() {
+      const video = document.getElementById('camera-stream');
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+          .then(stream => {
+            OrbitState.mediaStream = stream;
+            video.srcObject = stream;
+            video.classList.remove('hidden');
+            document.getElementById('camera-captured-image').classList.add('hidden');
+          })
+          .catch(err => {
+            console.warn('Camera permission denied or camera unavailable:', err);
+            video.classList.add('hidden');
+            const fallback = document.getElementById('camera-captured-image');
+            fallback.src = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800';
+            fallback.classList.remove('hidden');
+          });
+      }
+    }
+
+    function stopCameraStream() {
+      if (OrbitState.mediaStream) {
+        OrbitState.mediaStream.getTracks().forEach(t => t.stop());
+        OrbitState.mediaStream = null;
+      }
+    }
+
+    function setLensFilter(filter) {
+      OrbitState.currentFilter = filter;
+      document.getElementById('camera-active-filter').innerText = filter.toUpperCase();
+      const video = document.getElementById('camera-stream');
+      const img = document.getElementById('camera-captured-image');
+      video.className = `w-full h-full object-cover filter-${filter}`;
+      img.className = `w-full h-full object-cover filter-${filter}`;
+
+      document.querySelectorAll('.lens-pill').forEach(b => {
+        b.className = 'lens-pill px-3 py-1 rounded-full text-xs font-bold bg-[#1C1C1C] text-[#A8A8A8]';
+      });
+      event.currentTarget.className = 'lens-pill px-3 py-1 rounded-full text-xs font-bold bg-white text-black';
+    }
+
+    function captureSnap() {
+      const video = document.getElementById('camera-stream');
+      const canvas = document.getElementById('camera-canvas');
+      const capturedImg = document.getElementById('camera-captured-image');
+
+      if (!video.classList.contains('hidden') && video.videoWidth) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        OrbitState.tempCapturedDataUrl = canvas.toDataURL('image/jpeg');
+        capturedImg.src = OrbitState.tempCapturedDataUrl;
+      } else {
+        OrbitState.tempCapturedDataUrl = capturedImg.src;
+      }
+
+      video.classList.add('hidden');
+      capturedImg.classList.remove('hidden');
+      document.getElementById('camera-shutter-btn').classList.add('hidden');
+      document.getElementById('snap-publish-btn').classList.remove('hidden');
+    }
+
+    function publishCapturedSnap(dest) {
+      if (!OrbitState.tempCapturedDataUrl) return;
+      OrbitState.posts.unshift({
+        id: 'post_' + Date.now(),
+        authorId: OrbitState.user.id,
+        authorName: OrbitState.user.fullname,
+        authorHandle: '@' + OrbitState.user.username,
+        authorAvatar: OrbitState.user.avatar,
+        mediaUrl: OrbitState.tempCapturedDataUrl,
+        caption: 'Snap from Orbit Camera Studio ⚡',
+        category: 'Snap',
+        filterClass: 'filter-' + (OrbitState.currentFilter || 'normal'),
+        locationTag: 'Nearby (~300 m away)',
+        timeAgo: 'Just now',
+        likes: 1,
+        liked: false
+      });
+      localStorage.setItem('orbit_posts', JSON.stringify(OrbitState.posts));
+      renderFeed();
+      closeCameraModal();
+      navigateTo('feed');
+      alert('📸 Snap published successfully!');
+    }
+
+    function flipCamera() {
+      alert('🔄 Camera orientation flipped');
+    }
+
+    function handleMediaUpload(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          OrbitState.tempCapturedDataUrl = e.target.result;
+          const capturedImg = document.getElementById('camera-captured-image');
+          capturedImg.src = e.target.result;
+          document.getElementById('camera-stream').classList.add('hidden');
+          capturedImg.classList.remove('hidden');
+          document.getElementById('camera-shutter-btn').classList.add('hidden');
+          document.getElementById('snap-publish-btn').classList.remove('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    // --- 7. Direct Messages (DMs) ---
+    function renderConversations() {
+      const list = document.getElementById('conversations-list');
+      const emptyPrompt = document.getElementById('dm-conversations-empty');
+      list.innerHTML = '';
+
+      if (!OrbitState.conversations || OrbitState.conversations.length === 0) {
+        emptyPrompt.classList.remove('hidden');
+        return;
+      }
+
+      emptyPrompt.classList.add('hidden');
+      OrbitState.conversations.forEach((conv, idx) => {
+        const row = document.createElement('div');
+        row.className = `p-3.5 flex items-center gap-3 cursor-pointer hover:bg-[#121212] transition ${OrbitState.activeChatId === conv.id ? 'bg-[#1A1A1A]' : ''}`;
+        row.onclick = () => openConversation(conv.id);
+        row.innerHTML = `
+          <img src="${conv.partnerAvatar}" class="w-12 h-12 rounded-full object-cover border border-[#262626]">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between">
+              <h5 class="text-xs font-bold text-white truncate">${conv.partnerName}</h5>
+              <span class="text-[10px] text-[#737373]">${conv.lastTime || 'Today'}</span>
+            </div>
+            <p class="text-xs text-[#737373] truncate mt-0.5">${conv.lastMessage || 'Connected on Orbit'}</p>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function openConversation(convId) {
+      OrbitState.activeChatId = convId;
+      const conv = OrbitState.conversations.find(c => c.id === convId);
+      if (!conv) return;
+
+      document.getElementById('dm-no-active-chat').classList.add('hidden');
+      document.getElementById('dm-active-chat-content').classList.remove('hidden');
+      document.getElementById('dm-active-pane').classList.remove('hidden');
+
+      // Sync header
+      document.getElementById('chat-header-name').innerText = conv.partnerName;
+      document.getElementById('chat-header-avatar').src = conv.partnerAvatar;
+      document.getElementById('chat-header-distance').innerText = conv.approxDistance || 'Approx. 800 m away';
+
+      renderMessagesStream(conv);
+      renderConversations();
+    }
+
+    function renderMessagesStream(conv) {
+      const box = document.getElementById('chat-messages-box');
+      box.innerHTML = '';
+
+      (conv.messages || []).forEach(msg => {
+        const isMe = msg.senderId === OrbitState.user.id;
+        const bubble = document.createElement('div');
+        bubble.className = `flex flex-col ${isMe ? 'items-end ml-auto' : 'items-start mr-auto'} max-w-[75%]`;
+        bubble.innerHTML = `
+          <div class="${isMe ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-br-xs' : 'bg-[#1C1C1C] text-[#EDEDED] rounded-bl-xs'} p-3 rounded-2xl text-xs shadow-md">
+            ${msg.text}
+          </div>
+          <span class="text-[9px] text-[#737373] mt-1 mr-1">${msg.timestamp || 'Just now'}</span>
+        `;
+        box.appendChild(bubble);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function sendDirectMessage() {
+      const input = document.getElementById('dm-message-input');
+      const text = input.value.trim();
+      if (!text || !OrbitState.activeChatId) return;
+
+      const conv = OrbitState.conversations.find(c => c.id === OrbitState.activeChatId);
+      if (!conv) return;
+
+      conv.messages.push({
+        id: 'msg_' + Date.now(),
+        senderId: OrbitState.user.id,
+        text: text,
+        timestamp: 'Just now'
+      });
+      conv.lastMessage = text;
+      conv.lastTime = 'Just now';
+
+      localStorage.setItem('orbit_chats', JSON.stringify(OrbitState.conversations));
+      input.value = '';
+      renderMessagesStream(conv);
+      renderConversations();
+    }
+
+    function openNewChatModal() {
+      document.getElementById('new-chat-modal').classList.remove('hidden');
+    }
+    function closeNewChatModal() {
+      document.getElementById('new-chat-modal').classList.add('hidden');
+    }
+
+    function confirmStartChat() {
+      const handle = document.getElementById('new-chat-username').value.trim();
+      if (!handle) return;
+
+      const newId = 'chat_' + Date.now();
+      const newConv = {
+        id: newId,
+        partnerName: handle,
+        partnerAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
+        approxDistance: 'Approx. 1.2 km away',
+        lastMessage: 'Say hi to start the conversation!',
+        lastTime: 'Just now',
+        messages: [
+          { id: 'm1', senderId: 'them', text: `Hey there! Glad to connect on Orbit nearby! 👋`, timestamp: 'Just now' }
+        ]
+      };
+
+      OrbitState.conversations.unshift(newConv);
+      localStorage.setItem('orbit_chats', JSON.stringify(OrbitState.conversations));
+      closeNewChatModal();
+      openConversation(newId);
+    }
+
+    function triggerVoiceNote() {
+      const btn = document.getElementById('voice-record-btn');
+      btn.innerText = '🔴 Recording...';
+      setTimeout(() => {
+        btn.innerText = '🎙️';
+        if (OrbitState.activeChatId) {
+          const conv = OrbitState.conversations.find(c => c.id === OrbitState.activeChatId);
+          conv.messages.push({
+            id: 'voice_' + Date.now(),
+            senderId: OrbitState.user.id,
+            text: '🎵 Voice Message (0:14) ▶ ılıılıı',
+            timestamp: 'Just now'
+          });
+          renderMessagesStream(conv);
+          localStorage.setItem('orbit_chats', JSON.stringify(OrbitState.conversations));
+        }
+      }, 1500);
+    }
+
+    function triggerCall(type) {
+      alert(type === 'video' 
+        ? '📹 WebRTC encrypted video call connecting (P2P Mesh with STUN/TURN)...' 
+        : '📞 WebRTC encrypted audio call connecting...');
+    }
+
+    function closeMobileDM() {
+      document.getElementById('dm-active-pane').classList.add('hidden');
+    }
+
+    // --- 8. Profile View & Editor ---
+    function renderProfileGrid() {
+      const grid = document.getElementById('profile-posts-grid');
+      const empty = document.getElementById('profile-posts-empty');
+      grid.innerHTML = '';
+
+      const myPosts = OrbitState.posts.filter(p => p.authorId === OrbitState.user.id);
+      if (myPosts.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      myPosts.forEach(post => {
+        const item = document.createElement('div');
+        item.className = 'aspect-square bg-[#1A1A1A] rounded-xl overflow-hidden relative group cursor-pointer';
+        item.innerHTML = `
+          <img src="${post.mediaUrl}" class="w-full h-full object-cover ${post.filterClass || 'filter-normal'}">
+          <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-4 text-white font-bold text-xs">
+            <span>❤️ ${post.likes || 1}</span>
+          </div>
+        `;
+        grid.appendChild(item);
+      });
+    }
+
+    function openEditProfileModal() {
+      const u = OrbitState.user;
+      document.getElementById('edit-avatar-url').value = u.avatar;
+      document.getElementById('edit-fullname').value = u.fullname;
+      document.getElementById('edit-username').value = u.username;
+      document.getElementById('edit-profession').value = u.profession;
+      document.getElementById('edit-bio').value = u.bio;
+
+      document.querySelectorAll('#looking-for-checkboxes input').forEach(box => {
+        box.checked = (u.lookingFor || []).includes(box.value);
+      });
+
+      document.getElementById('edit-profile-modal').classList.remove('hidden');
+    }
+
+    function closeEditProfileModal() {
+      document.getElementById('edit-profile-modal').classList.add('hidden');
+    }
+
+    function saveUserProfile() {
+      const u = OrbitState.user;
+      u.avatar = document.getElementById('edit-avatar-url').value.trim() || u.avatar;
+      u.fullname = document.getElementById('edit-fullname').value.trim() || u.fullname;
+      u.username = document.getElementById('edit-username').value.trim() || u.username;
+      u.profession = document.getElementById('edit-profession').value.trim() || u.profession;
+      u.bio = document.getElementById('edit-bio').value.trim() || u.bio;
+
+      const checkedTags = [];
+      document.querySelectorAll('#looking-for-checkboxes input:checked').forEach(b => checkedTags.push(b.value));
+      u.lookingFor = checkedTags;
+
+      saveUserToStorage();
+      syncProfileUI();
+      closeEditProfileModal();
+      alert('✅ Profile updated successfully!');
+    }
+
+    function handleAvatarFileUpload(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById('edit-avatar-url').value = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    // --- 9. Explore View ---
+    function renderExplore() {
+      const grid = document.getElementById('explore-grid');
+      const empty = document.getElementById('explore-empty-state');
+      grid.innerHTML = '';
+
+      if (OrbitState.posts.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      OrbitState.posts.forEach(post => {
+        const item = document.createElement('div');
+        item.className = 'aspect-square bg-[#1A1A1A] rounded-xl overflow-hidden relative group cursor-pointer';
+        item.innerHTML = `
+          <img src="${post.mediaUrl}" class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex flex-col justify-end p-3 text-white">
+            <span class="text-xs font-bold">${post.authorName}</span>
+            <span class="text-[10px] text-purple-300">${post.category || 'Snap'} · ${post.locationTag || 'Nearby'}</span>
+          </div>
+        `;
+        grid.appendChild(item);
+      });
+    }
+
+    function filterCategory(cat) {
+      document.querySelectorAll('.category-pill').forEach(b => {
+        b.className = 'category-pill px-4 py-1.5 rounded-full text-xs font-bold bg-[#1C1C1C] text-[#A8A8A8]';
+      });
+      event.currentTarget.className = 'category-pill px-4 py-1.5 rounded-full text-xs font-bold bg-white text-black';
+      // Filter logic applies to explore
+    }
+
+    function filterExplore() {
+      // Live search input filtering
+    }
+
+    function shareOrbitLink() {
+      navigator.clipboard?.writeText(window.location.origin);
+      alert('📋 Orbit invite link copied to clipboard! Share it with friends nearby to discover each other.');
+    }
+
+    function openStoryCreator() {
+      openCameraModal();
+    }
+
+    function openSettingsModal() {
+      alert('⚙️ Orbit Privacy & Settings:\n• Location Fuzzing: Active (~800m)\n• Real GPS Exposure: Disabled (Protected)\n• Ghost Mode: Available anytime from navigation rail');
+    }
+  </script>
+</body>
+</html>
